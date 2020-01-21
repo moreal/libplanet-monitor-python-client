@@ -2,7 +2,7 @@ from typing import Type
 
 import zmq
 
-from libplanet_monitor.message import Tip, GetTip, Message, GetState, State
+from libplanet_monitor.message import Tip, GetTip, Message, GetState, State, GetBlock
 
 
 class Monitor:
@@ -16,9 +16,14 @@ class Monitor:
         self._send_message(GetTip())
         return self._receive_message()
 
-    def get_state(self, address: bytes) -> State:
-        tip = self.get_tip()
-        self._send_message(GetState(tip.block_hash, address))
+    def get_state(self, address: bytes, block_hash: bytes=None) -> State:
+        if block_hash is None:
+            block_hash = self.get_tip().block_hash
+        self._send_message(GetState(block_hash, address))
+        return self._receive_message()
+
+    def get_block(self, block_hash: bytes):
+        self._send_message(GetBlock(block_hash))
         return self._receive_message()
 
     def _send_message(self, message: Type[Message]):

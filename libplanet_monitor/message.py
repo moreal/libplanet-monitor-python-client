@@ -136,3 +136,34 @@ class State(Message):
     def frames(self) -> List[bytes]:
         raw_state = dumps(self.state)
         return [raw_state]
+
+
+@message_decorator(MessageType.GetBlock)
+class GetBlock(Message):
+    def __init__(self, block_hash: bytes):
+        self.block_hash = block_hash
+
+    @staticmethod
+    def from_frames(frames: List[bytes]):
+        block_hash = frames[0]
+        return GetBlock(block_hash)
+
+    @property
+    def frames(self) -> List[bytes]:
+        return [self.block_hash]
+
+
+@message_decorator(MessageType.Block)
+class Block(Message):
+    def __init__(self, block: BValue):
+        self.block = block
+
+    @staticmethod
+    def from_frames(frames: List[bytes]):
+        block = loads(frames[0])
+        return Block(block)
+
+    @property
+    def frames(self) -> List[bytes]:
+        raw_block = dumps(self.block)
+        return [raw_block]

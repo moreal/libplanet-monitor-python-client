@@ -1,8 +1,7 @@
 import abc
 from abc import ABC
 
-import zmq
-
+from bencodex import BValue, loads, dumps
 from enum import IntEnum, auto
 from typing import List, Type, Dict
 
@@ -102,3 +101,38 @@ class Tip(Message):
         raw_block_index = int.to_bytes(self.block_index, 8, 'big')
         raw_block_hash = self.block_hash
         return [raw_block_index, raw_block_hash]
+
+
+@message_decorator(MessageType.GetState)
+class GetState(Message):
+    def __init__(self, block_hash: bytes, address: bytes):
+        self.block_hash = block_hash
+        self.address = address
+
+    @staticmethod
+    def from_frames(frames: List[bytes]):
+        block_hash = frames[0]
+        address = int.from_bytes(frames[0], 'big')
+        return GetState(block_hash, address)
+
+    @property
+    def frames(self) -> List[bytes]:
+        raw_block_hash = self.block_hash
+        raw_address = self.address
+        return [raw_block_hash, raw_address]
+
+
+@message_decorator(MessageType.State)
+class State(Message):
+    def __init__(self, state: BValue):
+        self.state = state
+
+    @staticmethod
+    def from_frames(frames: List[bytes]):
+        state = loads(frames[0])
+        return State(state)
+
+    @property
+    def frames(self) -> List[bytes]:
+        raw_state = dumps(self.state)
+        return [raw_state]

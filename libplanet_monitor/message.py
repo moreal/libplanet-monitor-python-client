@@ -167,3 +167,34 @@ class Block(Message):
     def frames(self) -> List[bytes]:
         raw_block = dumps(self.block)
         return [raw_block]
+
+
+@message_decorator(MessageType.GetBlockHash)
+class GetBlockHash(Message):
+    def __init__(self, block_index: int):
+        self.block_index = block_index
+
+    @staticmethod
+    def from_frames(frames: List[bytes]):
+        block_index = int.from_bytes(frames[0], 'big')
+        return GetBlockHash(block_index)
+
+    @property
+    def frames(self) -> List[bytes]:
+        raw_block_index = int.to_bytes(self.block_index, 8, 'big')
+        return [raw_block_index]
+
+
+@message_decorator(MessageType.BlockHash)
+class BlockHash(Message):
+    def __init__(self, block_hash: bytes):
+        self.block_hash = block_hash
+
+    @staticmethod
+    def from_frames(frames: List[bytes]):
+        block_hash = frames[0]
+        return BlockHash(block_hash)
+
+    @property
+    def frames(self) -> List[bytes]:
+        return [self.block_hash]

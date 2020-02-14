@@ -1,0 +1,1 @@
+mypy libplanet_monitor --ignore-missing-imports

@@ -1,8 +1,9 @@
-from typing import Type
+from typing import Type, cast
 
 import zmq
 
-from libplanet_monitor.message import Tip, GetTip, Message, GetState, State, GetBlock, GetBlockHash, Block, BlockHash
+from .message import (Block, BlockHash, GetBlock, GetBlockHash, GetState,
+                      GetTip, Message, State, Tip)
 
 
 class Monitor:
@@ -14,23 +15,23 @@ class Monitor:
 
     def get_tip(self) -> Tip:
         self._send_message(GetTip())
-        return self._receive_message()
+        return cast(Tip, self._receive_message())
 
     def get_state(self, address: bytes, block_hash: bytes = None) -> State:
         if block_hash is None:
             block_hash = self.get_tip().block_hash
         self._send_message(GetState(block_hash, address))
-        return self._receive_message()
+        return cast(State, self._receive_message())
 
     def get_block(self, block_hash: bytes) -> Block:
         self._send_message(GetBlock(block_hash))
-        return self._receive_message()
+        return cast(Block, self._receive_message())
 
     def get_block_hash(self, block_index: int) -> BlockHash:
         self._send_message(GetBlockHash(block_index))
-        return self._receive_message()
+        return cast(BlockHash, self._receive_message())
 
-    def _send_message(self, message: Type[Message]):
+    def _send_message(self, message: Message):
         message.as_multipart()
         self.__request.send_multipart(message.as_multipart())
 

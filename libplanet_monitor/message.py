@@ -1,9 +1,9 @@
 import abc
 from abc import ABC
-
-from bencodex import BValue, loads, dumps
 from enum import IntEnum, auto
-from typing import List, Type, Dict
+from typing import Dict, List, Type
+
+from bencodex import BValue, dumps, loads
 
 
 class MessageType(IntEnum):
@@ -65,8 +65,8 @@ class Message(ABC):
         return [int.to_bytes(message_type, 4, 'big'), ] + self.frames
 
     @staticmethod
-    def parse(frames: List[bytes]) -> Type['Message']:
-        message_type: MessageType = int.from_bytes(frames[0], 'big')
+    def parse(frames: List[bytes]) -> Type[Message]:
+        message_type: MessageType = MessageType(int.from_bytes(frames[0], 'big'))
         return _enum_to_type[message_type].from_frames(frames[1:])
 
 
@@ -86,7 +86,7 @@ class GetTip(Message):
 
 @message_decorator(MessageType.Tip)
 class Tip(Message):
-    def __init__(self, block_index: int, block_hash: bytes):
+    def __init__(self, block_index: int, block_hash: bytes) -> None:
         self.block_index = block_index
         self.block_hash = block_hash
 
@@ -105,14 +105,14 @@ class Tip(Message):
 
 @message_decorator(MessageType.GetState)
 class GetState(Message):
-    def __init__(self, block_hash: bytes, address: bytes):
+    def __init__(self, block_hash: bytes, address: bytes) -> None:
         self.block_hash = block_hash
         self.address = address
 
     @staticmethod
     def from_frames(frames: List[bytes]):
         block_hash = frames[0]
-        address = int.from_bytes(frames[0], 'big')
+        address = frames[1]
         return GetState(block_hash, address)
 
     @property
@@ -124,7 +124,7 @@ class GetState(Message):
 
 @message_decorator(MessageType.State)
 class State(Message):
-    def __init__(self, state: BValue):
+    def __init__(self, state: BValue) -> None:
         self.state = state
 
     @staticmethod
@@ -140,7 +140,7 @@ class State(Message):
 
 @message_decorator(MessageType.GetBlock)
 class GetBlock(Message):
-    def __init__(self, block_hash: bytes):
+    def __init__(self, block_hash: bytes) -> None:
         self.block_hash = block_hash
 
     @staticmethod
@@ -155,7 +155,7 @@ class GetBlock(Message):
 
 @message_decorator(MessageType.Block)
 class Block(Message):
-    def __init__(self, block: BValue):
+    def __init__(self, block: BValue) -> None:
         self.block = block
 
     @staticmethod
@@ -171,7 +171,7 @@ class Block(Message):
 
 @message_decorator(MessageType.GetBlockHash)
 class GetBlockHash(Message):
-    def __init__(self, block_index: int):
+    def __init__(self, block_index: int) -> None:
         self.block_index = block_index
 
     @staticmethod
@@ -187,7 +187,7 @@ class GetBlockHash(Message):
 
 @message_decorator(MessageType.BlockHash)
 class BlockHash(Message):
-    def __init__(self, block_hash: bytes):
+    def __init__(self, block_hash: bytes) -> None:
         self.block_hash = block_hash
 
     @staticmethod

@@ -2,8 +2,9 @@ from typing import Type, cast
 
 import zmq
 
-from .message import (Block, BlockHash, GetBlock, GetBlockHash, GetState,
-                      GetTip, Message, State, Tip)
+from typing import Tuple
+from .message import *
+from . import message, blockchain
 
 
 class Monitor:
@@ -13,23 +14,27 @@ class Monitor:
         self.__request = self.__context.socket(zmq.REQ)
         self.__request.connect(self.__connection_string)
 
-    def get_tip(self) -> Tip:
-        self._send_message(GetTip())
-        return cast(Tip, self._receive_message())
+    def get_tip(self) -> Tuple[int, blockchain.Hash]:
+        self._send_message(message.GetTip())
+        reply: Tip = cast(Tip, self._receive_message())
+        return reply.block_index, reply.block_hash
 
-    def get_state(self, address: bytes, block_hash: bytes = None) -> State:
+    def get_state(self, address: blockchain.Address, block_hash: blockchain.Hash = None) -> BValue:
         if block_hash is None:
-            block_hash = self.get_tip().block_hash
-        self._send_message(GetState(block_hash, address))
-        return cast(State, self._receive_message())
+            block_hash = self.get_tip()[1]
+        self._send_message(message.GetState(block_hash, address))
+        reply: State = cast(State, self._receive_message())
+        return reply.state
 
-    def get_block(self, block_hash: bytes) -> Block:
-        self._send_message(GetBlock(block_hash))
-        return cast(Block, self._receive_message())
+    def get_block(self, block_hash: blockchain.Hash) -> blockchain.Block:
+        self._send_message(message.GetBlock(block_hash))
+        reply: Block = cast(Block, self._receive_message())
+        return reply.block
 
-    def get_block_hash(self, block_index: int) -> BlockHash:
-        self._send_message(GetBlockHash(block_index))
-        return cast(BlockHash, self._receive_message())
+    def get_block_hash(self, block_index: int) -> blockchain.Hash:
+        self._send_message(message.GetBlockHash(block_index))
+        reply: BlockHash = cast(BlockHash, self._receive_message())
+        return reply.block_hash
 
     def _send_message(self, message: Message):
         message.as_multipart()

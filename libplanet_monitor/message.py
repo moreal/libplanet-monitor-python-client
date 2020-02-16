@@ -5,6 +5,8 @@ from typing import Dict, List, Type
 
 from bencodex import BValue, dumps, loads
 
+from . import blockchain
+
 
 class MessageType(IntEnum):
     # key: (,)
@@ -86,14 +88,14 @@ class GetTip(Message):
 
 @message_decorator(MessageType.Tip)
 class Tip(Message):
-    def __init__(self, block_index: int, block_hash: bytes) -> None:
+    def __init__(self, block_index: int, block_hash: blockchain.Hash) -> None:
         self.block_index = block_index
         self.block_hash = block_hash
 
     @staticmethod
     def from_frames(frames: List[bytes]):
         block_index = int.from_bytes(frames[0], 'big')
-        block_hash = frames[1]
+        block_hash = blockchain.Hash(frames[1])
         return Tip(block_index, block_hash)
 
     @property
@@ -105,20 +107,20 @@ class Tip(Message):
 
 @message_decorator(MessageType.GetState)
 class GetState(Message):
-    def __init__(self, block_hash: bytes, address: bytes) -> None:
+    def __init__(self, block_hash: blockchain.Hash, address: blockchain.Address) -> None:
         self.block_hash = block_hash
         self.address = address
 
     @staticmethod
     def from_frames(frames: List[bytes]):
-        block_hash = frames[0]
-        address = frames[1]
+        block_hash = blockchain.Hash(frames[0])
+        address = blockchain.Address(frames[1])
         return GetState(block_hash, address)
 
     @property
     def frames(self) -> List[bytes]:
-        raw_block_hash = self.block_hash
-        raw_address = self.address
+        raw_block_hash = bytes(self.block_hash)
+        raw_address = bytes(self.address)
         return [raw_block_hash, raw_address]
 
 
@@ -140,22 +142,23 @@ class State(Message):
 
 @message_decorator(MessageType.GetBlock)
 class GetBlock(Message):
-    def __init__(self, block_hash: bytes) -> None:
+    def __init__(self, block_hash: blockchain.Hash) -> None:
         self.block_hash = block_hash
 
     @staticmethod
     def from_frames(frames: List[bytes]):
-        block_hash = frames[0]
+        block_hash = blockchain.Hash(frames[0])
         return GetBlock(block_hash)
 
     @property
     def frames(self) -> List[bytes]:
-        return [self.block_hash]
+        raw_block_hash = bytes(self.block_hash)
+        return [raw_block_hash]
 
 
 @message_decorator(MessageType.Block)
 class Block(Message):
-    def __init__(self, block: BValue) -> None:
+    def __init__(self, block: blockchain.Block) -> None:
         self.block = block
 
     @staticmethod
@@ -187,14 +190,15 @@ class GetBlockHash(Message):
 
 @message_decorator(MessageType.BlockHash)
 class BlockHash(Message):
-    def __init__(self, block_hash: bytes) -> None:
+    def __init__(self, block_hash: blockchain.Hash) -> None:
         self.block_hash = block_hash
 
     @staticmethod
     def from_frames(frames: List[bytes]):
-        block_hash = frames[0]
+        block_hash = blockchain.Hash(frames[0])
         return BlockHash(block_hash)
 
     @property
     def frames(self) -> List[bytes]:
-        return [self.block_hash]
+        raw_block_hash = bytes(self.block_hash)
+        return [raw_block_hash]
